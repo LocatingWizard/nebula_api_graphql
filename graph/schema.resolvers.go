@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"os"
 
 	"github.com/LocatingWizard/nebula_api_graphql/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,7 +15,7 @@ import (
 
 // CourseByID is the resolver for the courseByID field.
 func (r *queryResolver) CourseByID(ctx context.Context, id string) (*model.Course, error) {
-	coll := r.DB.Collection("Courses")
+	coll := r.DB.Collection(os.Getenv("COURSES_COLL_NAME"))
 
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -33,7 +34,7 @@ func (r *queryResolver) CourseByID(ctx context.Context, id string) (*model.Cours
 
 // Course is the resolver for the course field.
 func (r *queryResolver) Course(ctx context.Context) ([]*model.Course, error) {
-	coll := r.DB.Collection("Courses")
+	coll := r.DB.Collection(os.Getenv("COURSES_COLL_NAME"))
 
 	filter := bson.D{}
 	cursor, err := coll.Find(ctx, filter)

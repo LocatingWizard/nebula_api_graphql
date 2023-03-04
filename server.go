@@ -51,7 +51,7 @@ func main() {
 	}
 	fmt.Println("Pinged the primary node of the cluster. You successfully connected to MongoDB!")
 
-	db := client.Database("UTD")
+	db := client.Database(os.Getenv("DB_NAME"))
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{DB: db}}))
 
