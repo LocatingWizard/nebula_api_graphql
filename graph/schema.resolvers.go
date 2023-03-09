@@ -6,31 +6,13 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/LocatingWizard/nebula_api_graphql/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-
-// CourseByID is the resolver for the courseByID field.
-func (r *queryResolver) CourseByID(ctx context.Context, id string) (*model.Course, error) {
-	coll := r.DB.Collection(os.Getenv("COURSES_COLL_NAME"))
-
-	oid, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := bson.D{{"_id", oid}}
-	var result *model.Course
-	err = coll.FindOne(ctx, filter).Decode(&result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
 
 // Course is the resolver for the course field.
 func (r *queryResolver) Course(ctx context.Context) ([]*model.Course, error) {
@@ -47,6 +29,135 @@ func (r *queryResolver) Course(ctx context.Context) ([]*model.Course, error) {
 		return nil, err
 	}
 	return results, nil
+}
+
+// CourseByID is the resolver for the courseByID field.
+func (r *queryResolver) CourseByID(ctx context.Context, id string) (*model.Course, error) {
+	coll := r.DB.Collection(os.Getenv("COURSES_COLL_NAME"))
+
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.D{{"_id", oid}}
+	var result *model.Course
+	err = coll.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	fmt.Println(result.ID)
+
+	return result, nil
+}
+
+// Exam is the resolver for the exam field.
+func (r *queryResolver) Exam(ctx context.Context) ([]model.Exam, error) {
+	coll := r.DB.Collection(os.Getenv("EXAMS_COLL_NAME"))
+
+	filter := bson.D{}
+	cursor, err := coll.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []model.Exam
+	if err = cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+// ExamByID is the resolver for the examByID field.
+func (r *queryResolver) ExamByID(ctx context.Context, id string) (model.Exam, error) {
+	coll := r.DB.Collection(os.Getenv("EXAMS_COLL_NAME"))
+
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.D{{"_id", oid}}
+	var result model.Exam
+	err = coll.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// Professor is the resolver for the professor field.
+func (r *queryResolver) Professor(ctx context.Context) ([]*model.Professor, error) {
+	coll := r.DB.Collection(os.Getenv("PROFESSORS_COLL_NAME"))
+
+	filter := bson.D{}
+	cursor, err := coll.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*model.Professor
+	if err = cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+// ProfessorByID is the resolver for the professorByID field.
+func (r *queryResolver) ProfessorByID(ctx context.Context, id string) (*model.Professor, error) {
+	coll := r.DB.Collection(os.Getenv("PROFESSORS_COLL_NAME"))
+
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.D{{"_id", oid}}
+	var result *model.Professor
+	err = coll.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// Section is the resolver for the section field.
+func (r *queryResolver) Section(ctx context.Context) ([]*model.Section, error) {
+	coll := r.DB.Collection(os.Getenv("SECTIONS_COLL_NAME"))
+
+	filter := bson.D{}
+	cursor, err := coll.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*model.Section
+	if err = cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+// SectionByID is the resolver for the sectionByID field.
+func (r *queryResolver) SectionByID(ctx context.Context, id string) (*model.Section, error) {
+	coll := r.DB.Collection(os.Getenv("SECTIONS_COLL_NAME"))
+
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.D{{"_id", oid}}
+	var result *model.Section
+	err = coll.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // Query returns QueryResolver implementation.

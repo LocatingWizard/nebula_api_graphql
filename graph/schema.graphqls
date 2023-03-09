@@ -1,27 +1,13 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
-
-type Course {
-  _id: ID!
-  course_number: String!
-  subject_prefix: String!
-  title: String!
-  descriptions: String!
-  school: String!
-  credit_hours: String!
-  class_level: String!
-  activity_type: String!
-  grading: String!
-  internal_course_number: String!
-  sections: [ID!]!
-  lecture_contact_hours: String!
-  laboratory_contact_hours: String!
-  offering_frequency: String!
-  _v: Int!
-}
-
 type Query {
-  courseByID(id: ID!): Course!
   course: [Course!]!
+  courseByID(id: ID!): Course!
+
+  exam: [Exam!]!
+  examByID(id: ID!): Exam!
+
+  professor: [Professor!]!
+  professorByID(id: ID!): Professor
+
+  section: [Section!]!
+  sectionByID(id: ID!): Section
 }
