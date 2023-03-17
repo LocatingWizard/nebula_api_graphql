@@ -36,9 +36,9 @@ type ConsentRequirement {
 }
 
 type CollectionRequirement {
-    name: String!
-    required: Int!
+    type: String!
     options: [Requirement!]!
+    required: Int!
 }
 
 type HoursRequirement {

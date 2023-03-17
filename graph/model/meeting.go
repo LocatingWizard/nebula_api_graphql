@@ -7,11 +7,11 @@ import (
 )
 
 type Meeting struct {
-	StartDate   string       `json:"start_date"`
-	EndDate     string       `json:"end_date"`
-	MeetingDays []string     `json:"meeting_days"`
-	StartTime   string       `json:"start_time"`
-	EndTime     string       `json:"end_time"`
+	StartDate   string       `json:"start_date" bson:"start_date"`
+	EndDate     string       `json:"end_date" bson:"end_date"`
+	MeetingDays []string     `json:"meeting_days" bson:"meeting_days"`
+	StartTime   string       `json:"start_time" bson:"start_time"`
+	EndTime     string       `json:"end_time" bson:"end_time"`
 	Modality    ModalityType `json:"modality"`
 	Location    *Location    `json:"location"`
 }

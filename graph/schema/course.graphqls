@@ -13,7 +13,7 @@ type Course {
     prerequisites: CollectionRequirement!
     corequisites: CollectionRequirement!
     co_or_pre_requisites: CollectionRequirement!
-    sections: [ID!]!
+    sections: [Section!]!
     lecture_contact_hours: String!
     laboratory_contact_hours: String!
     offering_frequency: String!

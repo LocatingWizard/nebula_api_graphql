@@ -7,13 +7,29 @@ package graph
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/LocatingWizard/nebula_api_graphql/graph/model"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // Sections is the resolver for the sections field.
-func (r *courseResolver) Sections(ctx context.Context, obj *model.Course) ([]string, error) {
-	panic(fmt.Errorf("not implemented: Sections - sections"))
+func (r *courseResolver) Sections(ctx context.Context, obj *model.Course) ([]*model.Section, error) {
+	coll := r.DB.Collection(os.Getenv("SECTIONS_COLL_NAME"))
+	var out []*model.Section
+	for _, oid := range obj.Sections {
+
+		filter := bson.D{{"_id", oid}}
+		var result *model.Section
+		err := coll.FindOne(ctx, filter).Decode(&result)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		out = append(out, result)
+	}
+	return out, nil
 }
 
 // Course returns CourseResolver implementation.

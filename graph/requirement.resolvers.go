@@ -7,13 +7,175 @@ package graph
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/LocatingWizard/nebula_api_graphql/graph/model"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Options is the resolver for the options field.
 func (r *collectionRequirementResolver) Options(ctx context.Context, obj *model.CollectionRequirement) ([]model.Requirement, error) {
-	panic(fmt.Errorf("not implemented: Options - options"))
+	var out []model.Requirement
+	for _, req := range obj.Options {
+		bytes, _ := bson.Marshal(req)
+		switch req.Index(1).Key() {
+		case "class_reference":
+			var t model.CourseRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "section_reference":
+			var t model.SectionRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "exam_reference":
+			var t model.ExamRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "major":
+			var t model.MajorRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "minor":
+			var t model.MinorRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "minimum":
+			var t model.GPARequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "granter":
+			var t model.ConsentRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "options":
+			var t model.CollectionRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "required":
+			var t model.HoursRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "description":
+			var t model.OtherRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "choices":
+			var t model.ChoiceRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "max_hours":
+			var t model.LimitRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		case "core_flag":
+			var t model.CoreRequirement
+			bson.Unmarshal(bytes, &t)
+			out = append(out, t)
+		default:
+			panic("Unable to resolve Requirement")
+		}
+	}
+	return out, nil
+}
+
+// ClassReference is the resolver for the class_reference field.
+func (r *courseRequirementResolver) ClassReference(ctx context.Context, obj *model.CourseRequirement) (*model.Course, error) {
+	coll := r.DB.Collection(os.Getenv("COURSES_COLL_NAME"))
+
+	oid, err := primitive.ObjectIDFromHex(obj.ClassReference)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	filter := bson.D{{"_id", oid}}
+	var result *model.Course
+	err = coll.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// ExamReference is the resolver for the exam_reference field.
+func (r *examRequirementResolver) ExamReference(ctx context.Context, obj *model.ExamRequirement) (model.Exam, error) {
+	coll := r.DB.Collection(os.Getenv("EXAMS_COLL_NAME"))
+
+	oid, err := primitive.ObjectIDFromHex(obj.ExamReference)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.D{{"_id", oid}}
+	var raw bson.Raw
+	err = coll.FindOne(ctx, filter).Decode(&raw)
+	if err != nil {
+		return nil, err
+	}
+
+	switch raw.Lookup("type").StringValue() {
+	case "AP":
+		var result model.APExam
+		err = bson.Unmarshal(raw, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case "CLEP":
+		var result model.CLEPExam
+		err = bson.Unmarshal(raw, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case "IB":
+		var result model.IBExam
+		err = bson.Unmarshal(raw, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case "ALEKS":
+		var result model.ALEKSExam
+		err = bson.Unmarshal(raw, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case "CSPlacement":
+		var result model.CSPlacementExam
+		err = bson.Unmarshal(raw, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	default:
+		panic("Unable to resolve Exam")
+	}
+}
+
+// SectionReference is the resolver for the section_reference field.
+func (r *sectionRequirementResolver) SectionReference(ctx context.Context, obj *model.SectionRequirement) (*model.Section, error) {
+	coll := r.DB.Collection(os.Getenv("SECTIONS_COLL_NAME"))
+
+	oid, err := primitive.ObjectIDFromHex(obj.SectionReference)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	filter := bson.D{{"_id", oid}}
+	var result *model.Section
+	err = coll.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // CollectionRequirement returns CollectionRequirementResolver implementation.
@@ -21,4 +183,20 @@ func (r *Resolver) CollectionRequirement() CollectionRequirementResolver {
 	return &collectionRequirementResolver{r}
 }
 
+// CourseRequirement returns CourseRequirementResolver implementation.
+func (r *Resolver) CourseRequirement() CourseRequirementResolver {
+	return &courseRequirementResolver{r}
+}
+
+// ExamRequirement returns ExamRequirementResolver implementation.
+func (r *Resolver) ExamRequirement() ExamRequirementResolver { return &examRequirementResolver{r} }
+
+// SectionRequirement returns SectionRequirementResolver implementation.
+func (r *Resolver) SectionRequirement() SectionRequirementResolver {
+	return &sectionRequirementResolver{r}
+}
+
 type collectionRequirementResolver struct{ *Resolver }
+type courseRequirementResolver struct{ *Resolver }
+type examRequirementResolver struct{ *Resolver }
+type sectionRequirementResolver struct{ *Resolver }

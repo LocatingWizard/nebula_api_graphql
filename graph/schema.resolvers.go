@@ -47,7 +47,6 @@ func (r *queryResolver) CourseByID(ctx context.Context, id string) (*model.Cours
 		fmt.Println(err)
 		return nil, err
 	}
-	fmt.Println(result.ID)
 
 	return result, nil
 }
@@ -79,13 +78,51 @@ func (r *queryResolver) ExamByID(ctx context.Context, id string) (model.Exam, er
 	}
 
 	filter := bson.D{{"_id", oid}}
-	var result model.Exam
-	err = coll.FindOne(ctx, filter).Decode(&result)
+	var raw bson.Raw
+	err = coll.FindOne(ctx, filter).Decode(&raw)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	switch raw.Lookup("type").StringValue() {
+	case "AP":
+		var result model.APExam
+		err = bson.Unmarshal(raw, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case "CLEP":
+		var result model.CLEPExam
+		err = bson.Unmarshal(raw, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case "IB":
+		var result model.IBExam
+		err = bson.Unmarshal(raw, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case "ALEKS":
+		var result model.ALEKSExam
+		err = bson.Unmarshal(raw, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case "CSPlacement":
+		var result model.CSPlacementExam
+		err = bson.Unmarshal(raw, &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	default:
+		panic("Unable to resolve Exam")
+	}
 }
 
 // Professor is the resolver for the professor field.

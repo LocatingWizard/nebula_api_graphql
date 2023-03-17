@@ -39,7 +39,12 @@ type Config struct {
 type ResolverRoot interface {
 	CollectionRequirement() CollectionRequirementResolver
 	Course() CourseResolver
+	CourseRequirement() CourseRequirementResolver
+	ExamRequirement() ExamRequirementResolver
+	PossibleOutcomes() PossibleOutcomesResolver
 	Query() QueryResolver
+	Section() SectionResolver
+	SectionRequirement() SectionRequirementResolver
 }
 
 type DirectiveRoot struct {
@@ -90,9 +95,9 @@ type ComplexityRoot struct {
 	}
 
 	CollectionRequirement struct {
-		Name     func(childComplexity int) int
 		Options  func(childComplexity int) int
 		Required func(childComplexity int) int
+		Type     func(childComplexity int) int
 	}
 
 	ConsentRequirement struct {
@@ -246,7 +251,17 @@ type CollectionRequirementResolver interface {
 	Options(ctx context.Context, obj *model.CollectionRequirement) ([]model.Requirement, error)
 }
 type CourseResolver interface {
-	Sections(ctx context.Context, obj *model.Course) ([]string, error)
+	Sections(ctx context.Context, obj *model.Course) ([]*model.Section, error)
+}
+type CourseRequirementResolver interface {
+	ClassReference(ctx context.Context, obj *model.CourseRequirement) (*model.Course, error)
+}
+type ExamRequirementResolver interface {
+	ExamReference(ctx context.Context, obj *model.ExamRequirement) (model.Exam, error)
+}
+type PossibleOutcomesResolver interface {
+	Requirement(ctx context.Context, obj *model.PossibleOutcomes) (model.Requirement, error)
+	PossibleOutcomes(ctx context.Context, obj *model.PossibleOutcomes) ([][]model.Outcome, error)
 }
 type QueryResolver interface {
 	Course(ctx context.Context) ([]*model.Course, error)
@@ -257,6 +272,14 @@ type QueryResolver interface {
 	ProfessorByID(ctx context.Context, id string) (*model.Professor, error)
 	Section(ctx context.Context) ([]*model.Section, error)
 	SectionByID(ctx context.Context, id string) (*model.Section, error)
+}
+type SectionResolver interface {
+	CourseReference(ctx context.Context, obj *model.Section) (*model.Course, error)
+
+	Professors(ctx context.Context, obj *model.Section) ([]*model.Professor, error)
+}
+type SectionRequirementResolver interface {
+	SectionReference(ctx context.Context, obj *model.SectionRequirement) (*model.Section, error)
 }
 
 type executableSchema struct {
@@ -407,13 +430,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ChoiceRequirement.Choices(childComplexity), true
 
-	case "CollectionRequirement.name":
-		if e.complexity.CollectionRequirement.Name == nil {
-			break
-		}
-
-		return e.complexity.CollectionRequirement.Name(childComplexity), true
-
 	case "CollectionRequirement.options":
 		if e.complexity.CollectionRequirement.Options == nil {
 			break
@@ -427,6 +443,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CollectionRequirement.Required(childComplexity), true
+
+	case "CollectionRequirement.type":
+		if e.complexity.CollectionRequirement.Type == nil {
+			break
+		}
+
+		return e.complexity.CollectionRequirement.Type(childComplexity), true
 
 	case "ConsentRequirement.granter":
 		if e.complexity.ConsentRequirement.Granter == nil {
@@ -1101,7 +1124,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
 }
 
-//go:embed "academic_session.graphqls" "assistant.graphqls" "course.graphqls" "credit.graphqls" "exam.graphqls" "location.graphqls" "meeting.graphqls" "professor.graphqls" "requirement.graphqls" "schema.graphqls" "section.graphqls"
+//go:embed "schema/academic_session.graphqls" "schema/assistant.graphqls" "schema/course.graphqls" "schema/credit.graphqls" "schema/exam.graphqls" "schema/location.graphqls" "schema/meeting.graphqls" "schema/professor.graphqls" "schema/requirement.graphqls" "schema/schema.graphqls" "schema/section.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1113,17 +1136,17 @@ func sourceData(filename string) string {
 }
 
 var sources = []*ast.Source{
-	{Name: "academic_session.graphqls", Input: sourceData("academic_session.graphqls"), BuiltIn: false},
-	{Name: "assistant.graphqls", Input: sourceData("assistant.graphqls"), BuiltIn: false},
-	{Name: "course.graphqls", Input: sourceData("course.graphqls"), BuiltIn: false},
-	{Name: "credit.graphqls", Input: sourceData("credit.graphqls"), BuiltIn: false},
-	{Name: "exam.graphqls", Input: sourceData("exam.graphqls"), BuiltIn: false},
-	{Name: "location.graphqls", Input: sourceData("location.graphqls"), BuiltIn: false},
-	{Name: "meeting.graphqls", Input: sourceData("meeting.graphqls"), BuiltIn: false},
-	{Name: "professor.graphqls", Input: sourceData("professor.graphqls"), BuiltIn: false},
-	{Name: "requirement.graphqls", Input: sourceData("requirement.graphqls"), BuiltIn: false},
-	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
-	{Name: "section.graphqls", Input: sourceData("section.graphqls"), BuiltIn: false},
+	{Name: "schema/academic_session.graphqls", Input: sourceData("schema/academic_session.graphqls"), BuiltIn: false},
+	{Name: "schema/assistant.graphqls", Input: sourceData("schema/assistant.graphqls"), BuiltIn: false},
+	{Name: "schema/course.graphqls", Input: sourceData("schema/course.graphqls"), BuiltIn: false},
+	{Name: "schema/credit.graphqls", Input: sourceData("schema/credit.graphqls"), BuiltIn: false},
+	{Name: "schema/exam.graphqls", Input: sourceData("schema/exam.graphqls"), BuiltIn: false},
+	{Name: "schema/location.graphqls", Input: sourceData("schema/location.graphqls"), BuiltIn: false},
+	{Name: "schema/meeting.graphqls", Input: sourceData("schema/meeting.graphqls"), BuiltIn: false},
+	{Name: "schema/professor.graphqls", Input: sourceData("schema/professor.graphqls"), BuiltIn: false},
+	{Name: "schema/requirement.graphqls", Input: sourceData("schema/requirement.graphqls"), BuiltIn: false},
+	{Name: "schema/schema.graphqls", Input: sourceData("schema/schema.graphqls"), BuiltIn: false},
+	{Name: "schema/section.graphqls", Input: sourceData("schema/section.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -2099,12 +2122,12 @@ func (ec *executionContext) fieldContext_ChoiceRequirement_choices(ctx context.C
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_CollectionRequirement_name(ctx, field)
-			case "required":
-				return ec.fieldContext_CollectionRequirement_required(ctx, field)
+			case "type":
+				return ec.fieldContext_CollectionRequirement_type(ctx, field)
 			case "options":
 				return ec.fieldContext_CollectionRequirement_options(ctx, field)
+			case "required":
+				return ec.fieldContext_CollectionRequirement_required(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CollectionRequirement", field.Name)
 		},
@@ -2112,8 +2135,8 @@ func (ec *executionContext) fieldContext_ChoiceRequirement_choices(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _CollectionRequirement_name(ctx context.Context, field graphql.CollectedField, obj *model.CollectionRequirement) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CollectionRequirement_name(ctx, field)
+func (ec *executionContext) _CollectionRequirement_type(ctx context.Context, field graphql.CollectedField, obj *model.CollectionRequirement) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CollectionRequirement_type(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2126,7 +2149,7 @@ func (ec *executionContext) _CollectionRequirement_name(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return obj.Type, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2143,7 +2166,7 @@ func (ec *executionContext) _CollectionRequirement_name(ctx context.Context, fie
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CollectionRequirement_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CollectionRequirement_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CollectionRequirement",
 		Field:      field,
@@ -2151,50 +2174,6 @@ func (ec *executionContext) fieldContext_CollectionRequirement_name(ctx context.
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CollectionRequirement_required(ctx context.Context, field graphql.CollectedField, obj *model.CollectionRequirement) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CollectionRequirement_required(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Required, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CollectionRequirement_required(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CollectionRequirement",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2239,6 +2218,50 @@ func (ec *executionContext) fieldContext_CollectionRequirement_options(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Requirement does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CollectionRequirement_required(ctx context.Context, field graphql.CollectedField, obj *model.CollectionRequirement) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CollectionRequirement_required(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Required, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CollectionRequirement_required(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CollectionRequirement",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2899,12 +2922,12 @@ func (ec *executionContext) fieldContext_Course_prerequisites(ctx context.Contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_CollectionRequirement_name(ctx, field)
-			case "required":
-				return ec.fieldContext_CollectionRequirement_required(ctx, field)
+			case "type":
+				return ec.fieldContext_CollectionRequirement_type(ctx, field)
 			case "options":
 				return ec.fieldContext_CollectionRequirement_options(ctx, field)
+			case "required":
+				return ec.fieldContext_CollectionRequirement_required(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CollectionRequirement", field.Name)
 		},
@@ -2951,12 +2974,12 @@ func (ec *executionContext) fieldContext_Course_corequisites(ctx context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_CollectionRequirement_name(ctx, field)
-			case "required":
-				return ec.fieldContext_CollectionRequirement_required(ctx, field)
+			case "type":
+				return ec.fieldContext_CollectionRequirement_type(ctx, field)
 			case "options":
 				return ec.fieldContext_CollectionRequirement_options(ctx, field)
+			case "required":
+				return ec.fieldContext_CollectionRequirement_required(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CollectionRequirement", field.Name)
 		},
@@ -3003,12 +3026,12 @@ func (ec *executionContext) fieldContext_Course_co_or_pre_requisites(ctx context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_CollectionRequirement_name(ctx, field)
-			case "required":
-				return ec.fieldContext_CollectionRequirement_required(ctx, field)
+			case "type":
+				return ec.fieldContext_CollectionRequirement_type(ctx, field)
 			case "options":
 				return ec.fieldContext_CollectionRequirement_options(ctx, field)
+			case "required":
+				return ec.fieldContext_CollectionRequirement_required(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CollectionRequirement", field.Name)
 		},
@@ -3042,9 +3065,9 @@ func (ec *executionContext) _Course_sections(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]string)
+	res := resTmp.([]*model.Section)
 	fc.Result = res
-	return ec.marshalNID2ᚕstringᚄ(ctx, field.Selections, res)
+	return ec.marshalNSection2ᚕᚖgithubᚗcomᚋLocatingWizardᚋnebula_api_graphqlᚋgraphᚋmodelᚐSectionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Course_sections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3054,7 +3077,37 @@ func (ec *executionContext) fieldContext_Course_sections(ctx context.Context, fi
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			switch field.Name {
+			case "_id":
+				return ec.fieldContext_Section__id(ctx, field)
+			case "section_number":
+				return ec.fieldContext_Section_section_number(ctx, field)
+			case "course_reference":
+				return ec.fieldContext_Section_course_reference(ctx, field)
+			case "section_corequisites":
+				return ec.fieldContext_Section_section_corequisites(ctx, field)
+			case "academic_session":
+				return ec.fieldContext_Section_academic_session(ctx, field)
+			case "professors":
+				return ec.fieldContext_Section_professors(ctx, field)
+			case "teaching_assistants":
+				return ec.fieldContext_Section_teaching_assistants(ctx, field)
+			case "internal_class_number":
+				return ec.fieldContext_Section_internal_class_number(ctx, field)
+			case "instruction_mode":
+				return ec.fieldContext_Section_instruction_mode(ctx, field)
+			case "meetings":
+				return ec.fieldContext_Section_meetings(ctx, field)
+			case "core_flags":
+				return ec.fieldContext_Section_core_flags(ctx, field)
+			case "syllabus_uri":
+				return ec.fieldContext_Section_syllabus_uri(ctx, field)
+			case "grade_distribution":
+				return ec.fieldContext_Section_grade_distribution(ctx, field)
+			case "attributes":
+				return ec.fieldContext_Section_attributes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Section", field.Name)
 		},
 	}
 	return fc, nil
@@ -3206,7 +3259,7 @@ func (ec *executionContext) _CourseRequirement_class_reference(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ClassReference, nil
+		return ec.resolvers.CourseRequirement().ClassReference(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3227,8 +3280,8 @@ func (ec *executionContext) fieldContext_CourseRequirement_class_reference(ctx c
 	fc = &graphql.FieldContext{
 		Object:     "CourseRequirement",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "_id":
@@ -3420,7 +3473,7 @@ func (ec *executionContext) _ExamRequirement_exam_reference(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ExamReference, nil
+		return ec.resolvers.ExamRequirement().ExamReference(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3441,8 +3494,8 @@ func (ec *executionContext) fieldContext_ExamRequirement_exam_reference(ctx cont
 	fc = &graphql.FieldContext{
 		Object:     "ExamRequirement",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
 		},
@@ -4540,7 +4593,7 @@ func (ec *executionContext) _PossibleOutcomes_requirement(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Requirement, nil
+		return ec.resolvers.PossibleOutcomes().Requirement(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4558,8 +4611,8 @@ func (ec *executionContext) fieldContext_PossibleOutcomes_requirement(ctx contex
 	fc = &graphql.FieldContext{
 		Object:     "PossibleOutcomes",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Requirement does not have child fields")
 		},
@@ -4581,7 +4634,7 @@ func (ec *executionContext) _PossibleOutcomes_possible_outcomes(ctx context.Cont
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PossibleOutcomes, nil
+		return ec.resolvers.PossibleOutcomes().PossibleOutcomes(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4602,8 +4655,8 @@ func (ec *executionContext) fieldContext_PossibleOutcomes_possible_outcomes(ctx 
 	fc = &graphql.FieldContext{
 		Object:     "PossibleOutcomes",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Outcome does not have child fields")
 		},
@@ -5932,7 +5985,7 @@ func (ec *executionContext) _Section_course_reference(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CourseReference, nil
+		return ec.resolvers.Section().CourseReference(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5953,8 +6006,8 @@ func (ec *executionContext) fieldContext_Section_course_reference(ctx context.Co
 	fc = &graphql.FieldContext{
 		Object:     "Section",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "_id":
@@ -6039,12 +6092,12 @@ func (ec *executionContext) fieldContext_Section_section_corequisites(ctx contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_CollectionRequirement_name(ctx, field)
-			case "required":
-				return ec.fieldContext_CollectionRequirement_required(ctx, field)
+			case "type":
+				return ec.fieldContext_CollectionRequirement_type(ctx, field)
 			case "options":
 				return ec.fieldContext_CollectionRequirement_options(ctx, field)
+			case "required":
+				return ec.fieldContext_CollectionRequirement_required(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CollectionRequirement", field.Name)
 		},
@@ -6118,7 +6171,7 @@ func (ec *executionContext) _Section_professors(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Professors, nil
+		return ec.resolvers.Section().Professors(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6139,8 +6192,8 @@ func (ec *executionContext) fieldContext_Section_professors(ctx context.Context,
 	fc = &graphql.FieldContext{
 		Object:     "Section",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "_id":
@@ -6568,7 +6621,7 @@ func (ec *executionContext) _SectionRequirement_section_reference(ctx context.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SectionReference, nil
+		return ec.resolvers.SectionRequirement().SectionReference(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6589,8 +6642,8 @@ func (ec *executionContext) fieldContext_SectionRequirement_section_reference(ct
 	fc = &graphql.FieldContext{
 		Object:     "SectionRequirement",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "_id":
@@ -8887,16 +8940,9 @@ func (ec *executionContext) _CollectionRequirement(ctx context.Context, sel ast.
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CollectionRequirement")
-		case "name":
+		case "type":
 
-			out.Values[i] = ec._CollectionRequirement_name(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "required":
-
-			out.Values[i] = ec._CollectionRequirement_required(ctx, field, obj)
+			out.Values[i] = ec._CollectionRequirement_type(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -8921,6 +8967,13 @@ func (ec *executionContext) _CollectionRequirement(ctx context.Context, sel ast.
 				return innerFunc(ctx)
 
 			})
+		case "required":
+
+			out.Values[i] = ec._CollectionRequirement_required(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9166,18 +9219,31 @@ func (ec *executionContext) _CourseRequirement(ctx context.Context, sel ast.Sele
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CourseRequirement")
 		case "class_reference":
+			field := field
 
-			out.Values[i] = ec._CourseRequirement_class_reference(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CourseRequirement_class_reference(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "minimum_grade":
 
 			out.Values[i] = ec._CourseRequirement_minimum_grade(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -9236,18 +9302,31 @@ func (ec *executionContext) _ExamRequirement(ctx context.Context, sel ast.Select
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ExamRequirement")
 		case "exam_reference":
+			field := field
 
-			out.Values[i] = ec._ExamRequirement_exam_reference(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ExamRequirement_exam_reference(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "minimum_score":
 
 			out.Values[i] = ec._ExamRequirement_minimum_score(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -9621,16 +9700,42 @@ func (ec *executionContext) _PossibleOutcomes(ctx context.Context, sel ast.Selec
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PossibleOutcomes")
 		case "requirement":
+			field := field
 
-			out.Values[i] = ec._PossibleOutcomes_requirement(ctx, field, obj)
-
-		case "possible_outcomes":
-
-			out.Values[i] = ec._PossibleOutcomes_possible_outcomes(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PossibleOutcomes_requirement(ctx, field, obj)
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "possible_outcomes":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PossibleOutcomes_possible_outcomes(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9941,98 +10046,124 @@ func (ec *executionContext) _Section(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Section__id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "section_number":
 
 			out.Values[i] = ec._Section_section_number(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "course_reference":
+			field := field
 
-			out.Values[i] = ec._Section_course_reference(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Section_course_reference(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "section_corequisites":
 
 			out.Values[i] = ec._Section_section_corequisites(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "academic_session":
 
 			out.Values[i] = ec._Section_academic_session(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "professors":
+			field := field
 
-			out.Values[i] = ec._Section_professors(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Section_professors(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "teaching_assistants":
 
 			out.Values[i] = ec._Section_teaching_assistants(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "internal_class_number":
 
 			out.Values[i] = ec._Section_internal_class_number(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "instruction_mode":
 
 			out.Values[i] = ec._Section_instruction_mode(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "meetings":
 
 			out.Values[i] = ec._Section_meetings(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "core_flags":
 
 			out.Values[i] = ec._Section_core_flags(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "syllabus_uri":
 
 			out.Values[i] = ec._Section_syllabus_uri(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "grade_distribution":
 
 			out.Values[i] = ec._Section_grade_distribution(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "attributes":
 
 			out.Values[i] = ec._Section_attributes(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -10056,12 +10187,25 @@ func (ec *executionContext) _SectionRequirement(ctx context.Context, sel ast.Sel
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SectionRequirement")
 		case "section_reference":
+			field := field
 
-			out.Values[i] = ec._SectionRequirement_section_reference(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SectionRequirement_section_reference(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10686,38 +10830,6 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]string, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -11091,6 +11203,10 @@ func (ec *executionContext) marshalNRequirement2ᚕgithubᚗcomᚋLocatingWizard
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNSection2githubᚗcomᚋLocatingWizardᚋnebula_api_graphqlᚋgraphᚋmodelᚐSection(ctx context.Context, sel ast.SelectionSet, v model.Section) graphql.Marshaler {
+	return ec._Section(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNSection2ᚕᚖgithubᚗcomᚋLocatingWizardᚋnebula_api_graphqlᚋgraphᚋmodelᚐSectionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Section) graphql.Marshaler {
