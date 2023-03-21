@@ -10,6 +10,7 @@ import (
 
 	"github.com/LocatingWizard/nebula_api_graphql/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Requirement is the resolver for the requirement field.
@@ -75,7 +76,64 @@ func (r *possibleOutcomesResolver) Requirement(ctx context.Context, obj *model.P
 
 // PossibleOutcomes is the resolver for the possible_outcomes field.
 func (r *possibleOutcomesResolver) PossibleOutcomes(ctx context.Context, obj *model.PossibleOutcomes) ([][]model.Outcome, error) {
-	panic(fmt.Errorf("not implemented: PossibleOutcomes - possible_outcomes"))
+	var out [][]model.Outcome
+	for _, v := range obj.PossibleOutcomes {
+		fmt.Println(v)
+		if len(v) == 0 {
+			continue
+		}
+		var ids []primitive.ObjectID
+		vals, err := v.Values()
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		for _, w := range vals {
+			ids = append(ids, w.ObjectID())
+		}
+		var courses []model.Outcome
+		for _, w := range ids {
+			course, err := r.Query().CourseByID(ctx, w.Hex())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
+			courses = append(courses, course)
+		}
+		out = append(out, courses)
+		fmt.Println(ids)
+	}
+	return out, nil
+
+	// var out [][]model.Outcome
+	// fmt.Println(obj.PossibleOutcomes)
+	// for _, v := range obj.PossibleOutcomes {
+	// 	fmt.Println(*v)
+	// 	var ids []primitive.ObjectID
+	// 	fmt.Println("\n\n\nLigma1\n\n\n")
+	// 	_, bytes, err := bson.MarshalValue(v)
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 		return nil, err
+	// 	}
+	// 	fmt.Println("here?")
+	// 	bson.Unmarshal(bytes, &ids)
+	// 	fmt.Println("here2?")
+	// 	fmt.Println(ids)
+	// 	var temp []model.Outcome
+	// 	for _, w := range ids {
+	// 		fmt.Println("lol")
+	// 		course, err := r.Query().CourseByID(ctx, w.String())
+	// 		if err != nil {
+	// 			fmt.Println(err)
+	// 			return nil, err
+	// 		}
+	// 		temp = append(temp, course)
+	// 	}
+
+	// 	out = append(out, temp)
+	// }
+	// return out, nil
 }
 
 // PossibleOutcomes returns PossibleOutcomesResolver implementation.

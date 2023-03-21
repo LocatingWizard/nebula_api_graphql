@@ -11,8 +11,8 @@ type Outcome interface {
 }
 
 type PossibleOutcomes struct {
-	Requirement      *bson.Raw     `json:"requirement"`
-	PossibleOutcomes [][]*bson.Raw `json:"outcome" bson:"outcome"`
+	Requirement      *bson.Raw  `json:"requirement"`
+	PossibleOutcomes []bson.Raw `json:"outcome" bson:"outcome"`
 }
 
 type ALEKSExam struct {
