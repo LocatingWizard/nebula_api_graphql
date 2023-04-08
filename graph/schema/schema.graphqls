@@ -1,0 +1,15 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+# Use interfaces (rarely may use union types) in place of inheretance
+
+type Query {
+    courseByID(id: ID!): Course!
+    
+    sectionByID(id: ID!): Section!
+
+    professorByID(id: ID!): Professor!
+
+    examByID(id: ID!): Exam!
+}
