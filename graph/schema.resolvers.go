@@ -35,6 +35,59 @@ func (r *queryResolver) CourseByID(ctx context.Context, id string) (*model.Cours
 	return result, nil
 }
 
+// Course is the resolver for the course field.
+func (r *queryResolver) Course(ctx context.Context, courseNumber *string, subjectPrefix *string, title *string, description *string, school *string, creditHours *string, classLevel *string, activityType *string, grading *string, internalCourseNumber *string, lectureContactHours *string, offeringFrequency *string) ([]*model.Course, error) {
+	coll := r.DB.Collection(os.Getenv("COURSES_COLL_NAME"))
+
+	var results []*model.Course
+	filter := bson.D{}
+
+	if courseNumber != nil {
+		filter = append(filter, bson.E{"course_number", courseNumber})
+	}
+	if subjectPrefix != nil {
+		filter = append(filter, bson.E{"subject_prefix", subjectPrefix})
+	}
+	if title != nil {
+		filter = append(filter, bson.E{"title", title})
+	}
+	if description != nil {
+		filter = append(filter, bson.E{"description", description})
+	}
+	if school != nil {
+		filter = append(filter, bson.E{"school", school})
+	}
+	if creditHours != nil {
+		filter = append(filter, bson.E{"credit_hours", creditHours})
+	}
+	if classLevel != nil {
+		filter = append(filter, bson.E{"class_level", classLevel})
+	}
+	if activityType != nil {
+		filter = append(filter, bson.E{"activity_type", activityType})
+	}
+	if grading != nil {
+		filter = append(filter, bson.E{"grading", grading})
+	}
+	if internalCourseNumber != nil {
+		filter = append(filter, bson.E{"internal_course_number", internalCourseNumber})
+	}
+	if lectureContactHours != nil {
+		filter = append(filter, bson.E{"lecture_contact_hours", lectureContactHours})
+	}
+	if offeringFrequency != nil {
+		filter = append(filter, bson.E{"offering_frequency", offeringFrequency})
+	}
+
+	cursor, err := coll.Find(ctx, filter)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	cursor.All(ctx, &results)
+	return results, nil
+}
+
 // SectionByID is the resolver for the sectionByID field.
 func (r *queryResolver) SectionByID(ctx context.Context, id string) (*model.Section, error) {
 	coll := r.DB.Collection(os.Getenv("SECTIONS_COLL_NAME"))
@@ -138,3 +191,13 @@ func (r *queryResolver) ExamByID(ctx context.Context, id string) (model.Exam, er
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) CourseQuery(ctx context.Context, courseNumber *string, subjectPrefix *string, title *string, description *string, school *string, creditHours *string, classLevel *string, activityType *string, grading *string, internalCourseNumber *string, lectureContactHours *string, offeringFrequency *string) (*model.Course, error) {
+	panic(fmt.Errorf("not implemented: CourseQuery - courseQuery"))
+}
