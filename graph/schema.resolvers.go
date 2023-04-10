@@ -187,17 +187,78 @@ func (r *queryResolver) ExamByID(ctx context.Context, id string) (model.Exam, er
 	}
 }
 
+// Exam is the resolver for the exam field.
+func (r *queryResolver) Exam(ctx context.Context, typeArg *string, name *string, level *string) ([]model.Exam, error) {
+	coll := r.DB.Collection(os.Getenv("EXAMS_COLL_NAME"))
+
+	var results []model.Exam
+	filter := bson.D{}
+
+	if typeArg != nil {
+		filter = append(filter, bson.E{"type", typeArg})
+	}
+	if name != nil {
+		filter = append(filter, bson.E{"name", name})
+	}
+	if level != nil {
+		filter = append(filter, bson.E{"level", level})
+	}
+
+	cursor, err := coll.Find(ctx, filter)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	var raws []bson.Raw
+
+	cursor.All(ctx, &raws)
+
+	for _, raw := range raws {
+		switch raw.Lookup("type").StringValue() {
+		case "AP":
+			var result model.APExam
+			err = bson.Unmarshal(raw, &result)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, result)
+		case "CLEP":
+			var result model.CLEPExam
+			err = bson.Unmarshal(raw, &result)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, result)
+		case "IB":
+			var result model.IBExam
+			err = bson.Unmarshal(raw, &result)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, result)
+		case "ALEKS":
+			var result model.ALEKSExam
+			err = bson.Unmarshal(raw, &result)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, result)
+		case "CSPlacement":
+			var result model.CSPlacementExam
+			err = bson.Unmarshal(raw, &result)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, result)
+		default:
+			return nil, fmt.Errorf("unable to unmarshal exam: %s", err)
+		}
+	}
+	return results, nil
+}
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *queryResolver) CourseQuery(ctx context.Context, courseNumber *string, subjectPrefix *string, title *string, description *string, school *string, creditHours *string, classLevel *string, activityType *string, grading *string, internalCourseNumber *string, lectureContactHours *string, offeringFrequency *string) (*model.Course, error) {
-	panic(fmt.Errorf("not implemented: CourseQuery - courseQuery"))
-}

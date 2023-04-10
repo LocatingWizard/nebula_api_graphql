@@ -24,4 +24,7 @@ type Query {
     professorByID(id: ID!): Professor!
 
     examByID(id: ID!): Exam!
+    exam(type: String,
+            name: String,
+            level: String): [Exam!]!
 }
