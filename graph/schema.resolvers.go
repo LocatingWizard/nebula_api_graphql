@@ -109,6 +109,37 @@ func (r *queryResolver) SectionByID(ctx context.Context, id string) (*model.Sect
 	return result, nil
 }
 
+// Section is the resolver for the section field.
+func (r *queryResolver) Section(ctx context.Context, sectionNumber *string, courseReference *string, internalClassNumber *string, instructionMode *string, syllabusURI *string) ([]*model.Section, error) {
+	coll := r.DB.Collection(os.Getenv("SECTIONS_COLL_NAME"))
+
+	var results []*model.Section
+	filter := bson.D{}
+
+	if sectionNumber != nil {
+		filter = append(filter, bson.E{"section_number", sectionNumber})
+	}
+	if courseReference != nil {
+		filter = append(filter, bson.E{"course_reference", courseReference})
+	}
+	if internalClassNumber != nil {
+		filter = append(filter, bson.E{"internal_class_number", internalClassNumber})
+	}
+	if instructionMode != nil {
+		filter = append(filter, bson.E{"instruction_mode", instructionMode})
+	}
+	if syllabusURI != nil {
+		filter = append(filter, bson.E{"syllabus_uri", syllabusURI})
+	}
+
+	cursor, err := coll.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	cursor.All(ctx, &results)
+	return results, nil
+}
+
 // ProfessorByID is the resolver for the professorByID field.
 func (r *queryResolver) ProfessorByID(ctx context.Context, id string) (*model.Professor, error) {
 	coll := r.DB.Collection(os.Getenv("PROFESSORS_COLL_NAME"))
@@ -128,6 +159,43 @@ func (r *queryResolver) ProfessorByID(ctx context.Context, id string) (*model.Pr
 	}
 
 	return result, nil
+}
+
+// Professor is the resolver for the professor field.
+func (r *queryResolver) Professor(ctx context.Context, firstName *string, lastName *string, titles []string, email *string, phoneNumber *string, profileURI *string, imageURI *string) ([]*model.Professor, error) {
+	coll := r.DB.Collection(os.Getenv("PROFESSORS_COLL_NAME"))
+
+	var results []*model.Professor
+	filter := bson.D{}
+
+	if firstName != nil {
+		filter = append(filter, bson.E{"first_name", firstName})
+	}
+	if lastName != nil {
+		filter = append(filter, bson.E{"last_name", lastName})
+	}
+	if titles != nil {
+		filter = append(filter, bson.E{"titles", titles})
+	}
+	if email != nil {
+		filter = append(filter, bson.E{"email", email})
+	}
+	if phoneNumber != nil {
+		filter = append(filter, bson.E{"phone_number", phoneNumber})
+	}
+	if profileURI != nil {
+		filter = append(filter, bson.E{"profile_uri", profileURI})
+	}
+	if imageURI != nil {
+		filter = append(filter, bson.E{"image_uri", imageURI})
+	}
+
+	cursor, err := coll.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	cursor.All(ctx, &results)
+	return results, nil
 }
 
 // ExamByID is the resolver for the examByID field.

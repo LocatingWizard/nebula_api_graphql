@@ -18,10 +18,25 @@ type Query {
                 internal_course_number: String,
                 lecture_contact_hours: String,
                 offering_frequency: String): [Course!]!
+
     
     sectionByID(id: ID!): Section!
+    section(section_number: String,
+            course_reference: ID,
+            internal_class_number: String,
+            instruction_mode: String,
+            syllabus_uri: String): [Section!]!
+        # TODO: Academic Session, Teaching Assistants, Meetings, Professors
 
     professorByID(id: ID!): Professor!
+    professor(first_name: String,
+                last_name: String,
+                titles: [String!],
+                email: String,
+                phone_number: String,
+                profile_uri: String,
+                image_uri: String): [Professor!]!
+        # TODO: Office, Office Hours, Sections
 
     examByID(id: ID!): Exam!
     exam(type: String,
