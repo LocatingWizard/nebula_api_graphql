@@ -111,12 +111,14 @@ type ComplexityRoot struct {
 
 	Course struct {
 		ActivityType           func(childComplexity int) int
+		CatalogYear            func(childComplexity int) int
 		ClassLevel             func(childComplexity int) int
 		CoOrPreRequisites      func(childComplexity int) int
 		Corequisites           func(childComplexity int) int
 		CourseNumber           func(childComplexity int) int
 		CreditHours            func(childComplexity int) int
 		Description            func(childComplexity int) int
+		EnrollmentReqs         func(childComplexity int) int
 		Grading                func(childComplexity int) int
 		ID                     func(childComplexity int) int
 		InternalCourseNumber   func(childComplexity int) int
@@ -479,6 +481,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Course.ActivityType(childComplexity), true
 
+	case "Course.catalog_year":
+		if e.complexity.Course.CatalogYear == nil {
+			break
+		}
+
+		return e.complexity.Course.CatalogYear(childComplexity), true
+
 	case "Course.class_level":
 		if e.complexity.Course.ClassLevel == nil {
 			break
@@ -520,6 +529,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Course.Description(childComplexity), true
+
+	case "Course.enrollment_reqs":
+		if e.complexity.Course.EnrollmentReqs == nil {
+			break
+		}
+
+		return e.complexity.Course.EnrollmentReqs(childComplexity), true
 
 	case "Course.grading":
 		if e.complexity.Course.Grading == nil {
@@ -2906,6 +2922,50 @@ func (ec *executionContext) fieldContext_Course_description(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Course_enrollment_reqs(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Course_enrollment_reqs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EnrollmentReqs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Course_enrollment_reqs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Course",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Course_school(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Course_school(ctx, field)
 	if err != nil {
@@ -3191,14 +3251,11 @@ func (ec *executionContext) _Course_prerequisites(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.CollectionRequirement)
 	fc.Result = res
-	return ec.marshalNCollectionRequirement2ᚖgithubᚗcomᚋLocatingWizardᚋnebula_api_graphqlᚋgraphᚋmodelᚐCollectionRequirement(ctx, field.Selections, res)
+	return ec.marshalOCollectionRequirement2ᚖgithubᚗcomᚋLocatingWizardᚋnebula_api_graphqlᚋgraphᚋmodelᚐCollectionRequirement(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Course_prerequisites(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3243,14 +3300,11 @@ func (ec *executionContext) _Course_corequisites(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.CollectionRequirement)
 	fc.Result = res
-	return ec.marshalNCollectionRequirement2ᚖgithubᚗcomᚋLocatingWizardᚋnebula_api_graphqlᚋgraphᚋmodelᚐCollectionRequirement(ctx, field.Selections, res)
+	return ec.marshalOCollectionRequirement2ᚖgithubᚗcomᚋLocatingWizardᚋnebula_api_graphqlᚋgraphᚋmodelᚐCollectionRequirement(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Course_corequisites(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3295,14 +3349,11 @@ func (ec *executionContext) _Course_co_or_pre_requisites(ctx context.Context, fi
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.CollectionRequirement)
 	fc.Result = res
-	return ec.marshalNCollectionRequirement2ᚖgithubᚗcomᚋLocatingWizardᚋnebula_api_graphqlᚋgraphᚋmodelᚐCollectionRequirement(ctx, field.Selections, res)
+	return ec.marshalOCollectionRequirement2ᚖgithubᚗcomᚋLocatingWizardᚋnebula_api_graphqlᚋgraphᚋmodelᚐCollectionRequirement(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Course_co_or_pre_requisites(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3532,6 +3583,50 @@ func (ec *executionContext) fieldContext_Course_offering_frequency(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _Course_catalog_year(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Course_catalog_year(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CatalogYear, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Course_catalog_year(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Course",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CourseRequirement_class_reference(ctx context.Context, field graphql.CollectedField, obj *model.CourseRequirement) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CourseRequirement_class_reference(ctx, field)
 	if err != nil {
@@ -3581,6 +3676,8 @@ func (ec *executionContext) fieldContext_CourseRequirement_class_reference(ctx c
 				return ec.fieldContext_Course_title(ctx, field)
 			case "description":
 				return ec.fieldContext_Course_description(ctx, field)
+			case "enrollment_reqs":
+				return ec.fieldContext_Course_enrollment_reqs(ctx, field)
 			case "school":
 				return ec.fieldContext_Course_school(ctx, field)
 			case "credit_hours":
@@ -3607,6 +3704,8 @@ func (ec *executionContext) fieldContext_CourseRequirement_class_reference(ctx c
 				return ec.fieldContext_Course_laboratory_contact_hours(ctx, field)
 			case "offering_frequency":
 				return ec.fieldContext_Course_offering_frequency(ctx, field)
+			case "catalog_year":
+				return ec.fieldContext_Course_catalog_year(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
@@ -5526,6 +5625,8 @@ func (ec *executionContext) fieldContext_Query_courseByID(ctx context.Context, f
 				return ec.fieldContext_Course_title(ctx, field)
 			case "description":
 				return ec.fieldContext_Course_description(ctx, field)
+			case "enrollment_reqs":
+				return ec.fieldContext_Course_enrollment_reqs(ctx, field)
 			case "school":
 				return ec.fieldContext_Course_school(ctx, field)
 			case "credit_hours":
@@ -5552,6 +5653,8 @@ func (ec *executionContext) fieldContext_Query_courseByID(ctx context.Context, f
 				return ec.fieldContext_Course_laboratory_contact_hours(ctx, field)
 			case "offering_frequency":
 				return ec.fieldContext_Course_offering_frequency(ctx, field)
+			case "catalog_year":
+				return ec.fieldContext_Course_catalog_year(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
@@ -5619,6 +5722,8 @@ func (ec *executionContext) fieldContext_Query_course(ctx context.Context, field
 				return ec.fieldContext_Course_title(ctx, field)
 			case "description":
 				return ec.fieldContext_Course_description(ctx, field)
+			case "enrollment_reqs":
+				return ec.fieldContext_Course_enrollment_reqs(ctx, field)
 			case "school":
 				return ec.fieldContext_Course_school(ctx, field)
 			case "credit_hours":
@@ -5645,6 +5750,8 @@ func (ec *executionContext) fieldContext_Query_course(ctx context.Context, field
 				return ec.fieldContext_Course_laboratory_contact_hours(ctx, field)
 			case "offering_frequency":
 				return ec.fieldContext_Course_offering_frequency(ctx, field)
+			case "catalog_year":
+				return ec.fieldContext_Course_catalog_year(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
@@ -6367,6 +6474,8 @@ func (ec *executionContext) fieldContext_Section_course_reference(ctx context.Co
 				return ec.fieldContext_Course_title(ctx, field)
 			case "description":
 				return ec.fieldContext_Course_description(ctx, field)
+			case "enrollment_reqs":
+				return ec.fieldContext_Course_enrollment_reqs(ctx, field)
 			case "school":
 				return ec.fieldContext_Course_school(ctx, field)
 			case "credit_hours":
@@ -6393,6 +6502,8 @@ func (ec *executionContext) fieldContext_Section_course_reference(ctx context.Co
 				return ec.fieldContext_Course_laboratory_contact_hours(ctx, field)
 			case "offering_frequency":
 				return ec.fieldContext_Course_offering_frequency(ctx, field)
+			case "catalog_year":
+				return ec.fieldContext_Course_catalog_year(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
@@ -9440,6 +9551,13 @@ func (ec *executionContext) _Course(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "enrollment_reqs":
+
+			out.Values[i] = ec._Course_enrollment_reqs(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "school":
 
 			out.Values[i] = ec._Course_school(ctx, field, obj)
@@ -9486,23 +9604,14 @@ func (ec *executionContext) _Course(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = ec._Course_prerequisites(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "corequisites":
 
 			out.Values[i] = ec._Course_corequisites(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "co_or_pre_requisites":
 
 			out.Values[i] = ec._Course_co_or_pre_requisites(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "sections":
 			field := field
 
@@ -9540,6 +9649,13 @@ func (ec *executionContext) _Course(ctx context.Context, sel ast.SelectionSet, o
 		case "offering_frequency":
 
 			out.Values[i] = ec._Course_offering_frequency(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "catalog_year":
+
+			out.Values[i] = ec._Course_catalog_year(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -11972,6 +12088,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOCollectionRequirement2ᚖgithubᚗcomᚋLocatingWizardᚋnebula_api_graphqlᚋgraphᚋmodelᚐCollectionRequirement(ctx context.Context, sel ast.SelectionSet, v *model.CollectionRequirement) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CollectionRequirement(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

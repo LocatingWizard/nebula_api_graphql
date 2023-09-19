@@ -8,6 +8,7 @@ type Course struct {
 	SubjectPrefix          string                 `json:"subject_prefix" bson:"subject_prefix"`
 	Title                  string                 `json:"title"`
 	Description            string                 `json:"description"`
+	EnrollmentReqs         string                 `json:"enrollment_reqs" bson:"enrollment_reqs"`
 	School                 string                 `json:"school"`
 	CreditHours            string                 `json:"credit_hours" bson:"credit_hours"`
 	ClassLevel             string                 `json:"class_level" bson:"class_level"`
@@ -21,6 +22,8 @@ type Course struct {
 	LectureContactHours    string                 `json:"lecture_contact_hours" bson:"lecture_contact_hours"`
 	LaboratoryContactHours string                 `json:"laboratory_contact_hours" bson:"laboratory_contact_hours"`
 	OfferingFrequency      string                 `json:"offering_frequency" bson:"offering_frequency"`
+	CatalogYear            string                 `json:"catalog_year" bson:"catalog_year"`
+	Attributes             interface{}            `json:"attributes"`
 }
 
 func (Course) IsOutcome() {}

@@ -10,7 +10,7 @@ type Requirement interface {
 }
 
 type CollectionRequirement struct {
-	Name     string     `json:"name" bson:"type"`
+	Name     string     `json:"name" bson:"name"`
 	Required int        `json:"required"`
 	Options  []bson.Raw `json:"options"`
 }
