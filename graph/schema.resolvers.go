@@ -7,8 +7,6 @@ package graph
 import (
 	"context"
 	"fmt"
-	"os"
-
 	"github.com/LocatingWizard/nebula_api_graphql/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,7 +14,7 @@ import (
 
 // CourseByID is the resolver for the courseByID field.
 func (r *queryResolver) CourseByID(ctx context.Context, id string) (*model.Course, error) {
-	coll := r.DB.Collection(os.Getenv("COURSES_COLL_NAME"))
+	coll := r.DB.Collection("courses")
 
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -37,7 +35,7 @@ func (r *queryResolver) CourseByID(ctx context.Context, id string) (*model.Cours
 
 // Course is the resolver for the course field.
 func (r *queryResolver) Course(ctx context.Context, courseNumber *string, subjectPrefix *string, title *string, description *string, school *string, creditHours *string, classLevel *string, activityType *string, grading *string, internalCourseNumber *string, lectureContactHours *string, offeringFrequency *string) ([]*model.Course, error) {
-	coll := r.DB.Collection(os.Getenv("COURSES_COLL_NAME"))
+	coll := r.DB.Collection("courses")
 
 	var results []*model.Course
 	filter := bson.D{}
@@ -90,7 +88,7 @@ func (r *queryResolver) Course(ctx context.Context, courseNumber *string, subjec
 
 // SectionByID is the resolver for the sectionByID field.
 func (r *queryResolver) SectionByID(ctx context.Context, id string) (*model.Section, error) {
-	coll := r.DB.Collection(os.Getenv("SECTIONS_COLL_NAME"))
+	coll := r.DB.Collection("sections")
 
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -111,7 +109,7 @@ func (r *queryResolver) SectionByID(ctx context.Context, id string) (*model.Sect
 
 // Section is the resolver for the section field.
 func (r *queryResolver) Section(ctx context.Context, sectionNumber *string, courseReference *string, internalClassNumber *string, instructionMode *string, syllabusURI *string) ([]*model.Section, error) {
-	coll := r.DB.Collection(os.Getenv("SECTIONS_COLL_NAME"))
+	coll := r.DB.Collection("sections")
 
 	var results []*model.Section
 	filter := bson.D{}
@@ -142,7 +140,7 @@ func (r *queryResolver) Section(ctx context.Context, sectionNumber *string, cour
 
 // ProfessorByID is the resolver for the professorByID field.
 func (r *queryResolver) ProfessorByID(ctx context.Context, id string) (*model.Professor, error) {
-	coll := r.DB.Collection(os.Getenv("PROFESSORS_COLL_NAME"))
+	coll := r.DB.Collection("professors")
 
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -163,7 +161,7 @@ func (r *queryResolver) ProfessorByID(ctx context.Context, id string) (*model.Pr
 
 // Professor is the resolver for the professor field.
 func (r *queryResolver) Professor(ctx context.Context, firstName *string, lastName *string, titles []string, email *string, phoneNumber *string, profileURI *string, imageURI *string) ([]*model.Professor, error) {
-	coll := r.DB.Collection(os.Getenv("PROFESSORS_COLL_NAME"))
+	coll := r.DB.Collection("professors")
 
 	var results []*model.Professor
 	filter := bson.D{}
@@ -200,7 +198,7 @@ func (r *queryResolver) Professor(ctx context.Context, firstName *string, lastNa
 
 // ExamByID is the resolver for the examByID field.
 func (r *queryResolver) ExamByID(ctx context.Context, id string) (model.Exam, error) {
-	coll := r.DB.Collection(os.Getenv("EXAMS_COLL_NAME"))
+	coll := r.DB.Collection("exams")
 
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -257,7 +255,7 @@ func (r *queryResolver) ExamByID(ctx context.Context, id string) (model.Exam, er
 
 // Exam is the resolver for the exam field.
 func (r *queryResolver) Exam(ctx context.Context, typeArg *string, name *string, level *string) ([]model.Exam, error) {
-	coll := r.DB.Collection(os.Getenv("EXAMS_COLL_NAME"))
+	coll := r.DB.Collection("exams")
 
 	var results []model.Exam
 	filter := bson.D{}

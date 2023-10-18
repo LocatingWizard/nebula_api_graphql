@@ -50,7 +50,7 @@ func main() {
 	}
 	fmt.Println("Pinged the primary node of the cluster. You successfully connected to MongoDB!")
 
-	db := client.Database(os.Getenv("DB_NAME"))
+	db := client.Database("combinedDB")
 	// pass the database object into the Resolver struct object (dependency injection)
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{DB: db}}))
 
